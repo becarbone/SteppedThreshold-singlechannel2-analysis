@@ -186,7 +186,7 @@ for (i=0;i<sourcelist.length; i++) {
 	for(p=0;p<condition.length;p++){
 		areaROI = Dialog.getNumber();
 		areaROIarray = Array.concat(areaROIarray, areaROI);
-		}
+	}
 
 	for(d=0;d<condition.length;d++)	{
 		tempareaArray = newArray();
@@ -194,7 +194,10 @@ for (i=0;i<sourcelist.length; i++) {
 		CorrectedPunctaStr = CorrectedPunctaStr + filename;
 		open(sourcedir+sourcelist[i]+condition[d]);
 		title = getTitle();
+		selectImage(title);
 		run("Properties...", "channels=1 slices=1 frames=1 unit=um pixel_width=0.1705 pixel_height=0.1705 voxel_depth=1");
+		run("Duplicate...", "title="+title+"_unmask");
+		selectImage(title);
 		run("Gaussian Blur...", "sigma=1");
 		setColor("Magenta");
 		int = title;
@@ -209,6 +212,7 @@ for (i=0;i<sourcelist.length; i++) {
 			shortTitle = substring(title, 0, lengthOf(title)-4);
 			nameArray = Array.concat(nameArray, shortTitle+"_"+t);
 			NameString = Array.concat(NameString, shortTitle+"_"+t);
+			selectImage(title);
 			mask();
 			Num = Num +"	" +  number;
 			are = are +"	" +  area;
@@ -216,8 +220,8 @@ for (i=0;i<sourcelist.length; i++) {
 			corNum = corNum + "	" + (number/areaROIarray[d]);
 			
 			if(t==0){	
-			punctathresh0 = Array.concat(punctathresh0,number);
-			areathresh0 = Array.concat(areathresh0,area);
+				punctathresh0 = Array.concat(punctathresh0,number);
+				areathresh0 = Array.concat(areathresh0,area);
 			}	
 			else if(t==3){
 				punctathresh3 = Array.concat(punctathresh3,number);
@@ -440,6 +444,8 @@ for (i=0;i<sourcelist.length; i++) {
 		statsperROIpuncta = Array.concat(statsperROIpuncta, nameArray[e] + "," + min + "," + max + "," + mean + "," +stdDev);
 	
 		selectImage(title);
+		close();
+		selectImage(title+"_unmask");
 		close();
 		selectWindow(title+"_"+channel+0+"_mask");
 		run("Select None");
@@ -828,7 +834,6 @@ for (i=0;i<sourcelist.length; i++) {
 		PunctastandardMeanArray = Array.concat(PunctastandardMeanArray,mean);
 		PunctastandardDevArray = Array.concat(PunctastandardDevArray,stdDev);
 	}	
-	
 	Array.getStatistics(areathresh0, min, max, mean, stdDev);
 	threshStatsArea = Array.concat(threshStatsArea,nameArray[e-54]+",0,"+min+","+max+","+mean+","+stdDev);
 	if(sourcelist[i]==standard) {
@@ -1255,9 +1260,15 @@ function mask() {
 		roiManager("Save",punctadir+"ROI_"+shortTitle+"_"+t+".zip");
 		for(j=0;j<nResults;j++) {
 			area = area + getResult("Area",j);
+		}
+		area = area/nResults;	
+	}
+	selectImage(title+"_unmask");
+	roiManager("Measure");
+	if(roiManager("count")>0) {
+		for(j=0;j<nResults;j++) {
 			intensity = intensity + getResult("IntDen",j);
 		}
-		area = area/nResults;
 		intensity = intensity/nResults;
 	}
 	roiManager("reset");
@@ -1274,6 +1285,7 @@ function mask() {
 		run("Add Slice");
 		setSlice(nSlices);
 		shortTitle = substring(title,0, lengthOf(title)-4);
+		selectImage(title+"_"+channel+0+"_mask");
 		run("Set Label...", "label="+shortTitle+"_"+t);
 		run("Paste");
 	}
